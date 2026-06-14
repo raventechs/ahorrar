@@ -6,18 +6,8 @@
 <title>AhorrAR</title>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
-  :root {
-    --navy:#0f1e3d;--blue:#1d4ed8;--blue-dark:#1338a0;--gold:#f0b84a;--gold-dark:#c49020;
-    --green:#22c55e;--red:#ef4444;
-    --bg:#eef0f6;--surface:#ffffff;--border:#e2e8f0;--text:#0f1e3d;--text-sub:#64748b;
-    --gray:#94a3b8;--shadow:0 4px 0 0 #c8cad4;--chip-bg:#eef0f6;
-    --header-bg:#0f1e3d;--header-text:#ffffff;
-  }
-  [data-theme="dark"] {
-    --bg:#0f172a;--surface:#1e293b;--border:#334155;--text:#f1f5f9;--text-sub:#94a3b8;
-    --gray:#64748b;--shadow:0 4px 0 0 #0c1628;--chip-bg:#0f172a;
-    --header-bg:#080f1e;--header-text:#f1f5f9;
-  }
+  :root{--navy:#0f1e3d;--blue:#1d4ed8;--blue-dark:#1338a0;--gold:#f0b84a;--gold-dark:#c49020;--green:#22c55e;--red:#ef4444;--bg:#eef0f6;--surface:#ffffff;--border:#e2e8f0;--text:#0f1e3d;--text-sub:#64748b;--gray:#94a3b8;--shadow:0 4px 0 0 #c8cad4;--chip-bg:#eef0f6;--header-bg:#0f1e3d;--header-text:#ffffff;}
+  [data-theme="dark"]{--bg:#0f172a;--surface:#1e293b;--border:#334155;--text:#f1f5f9;--text-sub:#94a3b8;--gray:#64748b;--shadow:0 4px 0 0 #0c1628;--chip-bg:#0f172a;--header-bg:#080f1e;--header-text:#f1f5f9;}
   *{box-sizing:border-box;margin:0;padding:0;}
   body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;transition:background .2s,color .2s;}
   /* AUTH */
@@ -42,7 +32,7 @@
   /* APP SHELL */
   #app-screen{display:none;min-height:100vh;}
   .header{background:var(--header-bg);padding:14px 20px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;transition:background .2s;}
-  .header-logo{font-size:22px;font-weight:800;color:var(--header-text);letter-spacing:-.5px;}
+  .header-logo{font-size:22px;font-weight:800;color:var(--header-text);letter-spacing:-.5px;cursor:pointer;user-select:none;}
   .header-logo span{color:var(--gold);}
   .header-right{display:flex;align-items:center;gap:6px;}
   .header-date{font-size:12px;color:var(--gray);font-weight:500;}
@@ -106,7 +96,13 @@
   .promo-vence.pronto{color:#f97316;font-weight:600;}
   .btn-mapa{display:inline-flex;align-items:center;gap:5px;margin-top:10px;padding:7px 12px;background:#f0fdf4;border:1.5px solid #bbf7d0;border-radius:8px;color:#166534;font-size:12px;font-weight:700;cursor:pointer;font-family:'Inter',sans-serif;text-decoration:none;transition:opacity .2s;}
   [data-theme="dark"] .btn-mapa{background:#052e16;border-color:#166534;color:#4ade80;}
-  .btn-mapa:hover{opacity:.85;}
+  /* ADMIN ACTIONS EN CARD */
+  .admin-actions{display:flex;gap:8px;margin-top:10px;padding-top:10px;border-top:1px solid var(--border);}
+  .btn-admin-del{flex:1;padding:7px;background:#fef2f2;border:1.5px solid #fecaca;border-radius:8px;color:var(--red);font-size:12px;font-weight:700;cursor:pointer;font-family:'Inter',sans-serif;}
+  .btn-admin-del:hover{background:#fee2e2;}
+  [data-theme="dark"] .btn-admin-del{background:#3f0f0f;border-color:#7f1d1d;}
+  .btn-admin-edit{flex:1;padding:7px;background:#eff6ff;border:1.5px solid #bfdbfe;border-radius:8px;color:var(--blue);font-size:12px;font-weight:700;cursor:pointer;font-family:'Inter',sans-serif;}
+  [data-theme="dark"] .btn-admin-edit{background:#1e3a5f;border-color:#1d4ed8;}
   /* STATES */
   .empty-state{text-align:center;padding:48px 24px;color:var(--gray);}
   .empty-state .icon{font-size:48px;margin-bottom:12px;}
@@ -156,10 +152,43 @@
   .toast{position:fixed;bottom:90px;left:50%;transform:translateX(-50%) translateY(20px);background:var(--navy);color:#fff;padding:12px 20px;border-radius:12px;font-size:14px;font-weight:600;opacity:0;transition:all .3s;z-index:400;white-space:nowrap;pointer-events:none;}
   [data-theme="dark"] .toast{background:#1e293b;border:1px solid var(--border);}
   .toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
-  @media(max-width:390px){.promo-descuento{font-size:22px;}.dias-grid{grid-template-columns:repeat(3,1fr);}.zona-grid{grid-template-columns:1fr;}}
+  /* ADMIN PANEL */
+  #admin-screen{display:none;min-height:100vh;}
+  .admin-header{background:#7c3aed;padding:14px 20px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;}
+  .admin-header-title{font-size:18px;font-weight:800;color:#fff;}
+  .admin-badge{background:rgba(255,255,255,.2);color:#fff;font-size:11px;font-weight:700;padding:3px 8px;border-radius:10px;}
+  .btn-admin-exit{background:none;border:2px solid rgba(255,255,255,.4);color:#fff;border-radius:8px;padding:6px 12px;font-size:13px;font-weight:600;cursor:pointer;font-family:'Inter',sans-serif;}
+  .admin-tabs{background:#6d28d9;display:flex;}
+  .admin-tab{flex:1;padding:12px 4px;text-align:center;font-size:12px;font-weight:600;color:rgba(255,255,255,.6);cursor:pointer;border-bottom:3px solid transparent;transition:all .2s;}
+  .admin-tab.active{color:#fff;border-bottom-color:#f0b84a;}
+  .admin-content{padding:16px;padding-bottom:90px;}
+  .admin-card{background:var(--surface);border-radius:14px;padding:14px;margin-bottom:10px;box-shadow:var(--shadow);border:1px solid var(--border);}
+  .admin-card-title{font-size:15px;font-weight:700;color:var(--text);margin-bottom:2px;}
+  .admin-card-sub{font-size:12px;color:var(--gray);margin-bottom:10px;}
+  .admin-card-actions{display:flex;gap:8px;}
+  .btn-ban{flex:1;padding:8px;background:#fef2f2;border:1.5px solid #fecaca;border-radius:8px;color:var(--red);font-size:12px;font-weight:700;cursor:pointer;font-family:'Inter',sans-serif;}
+  .btn-unban{flex:1;padding:8px;background:#f0fdf4;border:1.5px solid #bbf7d0;border-radius:8px;color:#166534;font-size:12px;font-weight:700;cursor:pointer;font-family:'Inter',sans-serif;}
+  [data-theme="dark"] .btn-ban{background:#3f0f0f;border-color:#7f1d1d;}
+  [data-theme="dark"] .btn-unban{background:#052e16;border-color:#166534;color:#4ade80;}
+  .admin-section-title{font-size:14px;font-weight:700;color:var(--text);margin-bottom:12px;padding-top:4px;}
+  .user-banned{opacity:.5;}
+  .ban-badge{font-size:10px;font-weight:700;background:var(--red);color:#fff;padding:2px 6px;border-radius:6px;margin-left:6px;}
+  /* MODAL ADMIN PIN */
+  #modal-admin-pin .modal{max-height:300px;}
+  .pin-display{display:flex;gap:10px;justify-content:center;margin:20px 0;}
+  .pin-dot{width:16px;height:16px;border-radius:50%;background:var(--border);transition:background .2s;}
+  .pin-dot.filled{background:var(--blue);}
+  .pin-pad{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;}
+  .pin-btn{padding:16px;background:var(--bg);border:2px solid var(--border);border-radius:12px;font-size:20px;font-weight:700;color:var(--text);cursor:pointer;font-family:'Inter',sans-serif;transition:all .2s;}
+  .pin-btn:active{background:var(--blue);color:#fff;border-color:var(--blue);}
+  .pin-error{color:var(--red);font-size:13px;font-weight:600;text-align:center;margin-top:8px;display:none;}
+  /* MODAL EDITAR PROMO ADMIN */
+  @media(max-width:390px){.promo-descuento{font-size:22px;}.dias-grid{grid-template-columns:repeat(3,1fr);}.zona-grid{grid-template-columns:1fr;}.pin-pad{gap:8px;}.pin-btn{padding:14px;font-size:18px;}}
 </style>
 </head>
 <body>
+
+<!-- AUTH -->
 <div id="auth-screen">
   <div class="auth-logo">Ahorr<span>AR</span></div>
   <p class="auth-tagline">Descuentos del día, en un lugar</p>
@@ -176,8 +205,7 @@
       <p class="auth-title">Crear cuenta</p>
       <div class="field"><label>Email</label><input type="email" id="reg-email" placeholder="tu@email.com"></div>
       <div class="field"><label>Contraseña</label><input type="password" id="reg-pass" placeholder="Mínimo 6 caracteres"></div>
-      <div class="field">
-        <label>¿De dónde sos? *</label>
+      <div class="field"><label>¿De dónde sos? *</label>
         <select id="reg-zona">
           <option value="">Seleccioná tu provincia</option>
           <option>Capital Federal</option><option>Gran Buenos Aires</option><option>Buenos Aires (interior)</option>
@@ -196,9 +224,10 @@
   </div>
 </div>
 
+<!-- APP NORMAL -->
 <div id="app-screen">
   <div class="header">
-    <div class="header-logo">Ahorr<span>AR</span></div>
+    <div class="header-logo" id="header-logo">Ahorr<span>AR</span></div>
     <div class="header-right">
       <span class="header-date" id="header-date"></span>
       <button class="btn-theme" id="btn-theme" title="Cambiar tema">🌙</button>
@@ -270,6 +299,34 @@
   <button class="fab" id="btn-fab">＋</button>
 </div>
 
+<!-- PANEL ADMIN -->
+<div id="admin-screen">
+  <div class="admin-header">
+    <div>
+      <div class="admin-header-title">⚡ Panel Admin</div>
+    </div>
+    <div style="display:flex;align-items:center;gap:8px">
+      <span class="admin-badge">SUPER USUARIO</span>
+      <button class="btn-admin-exit" id="btn-admin-exit">Salir</button>
+    </div>
+  </div>
+  <div class="admin-tabs">
+    <div class="admin-tab active" id="atab-promos">🏷️ Promos</div>
+    <div class="admin-tab" id="atab-usuarios">👥 Usuarios</div>
+  </div>
+  <div class="admin-content">
+    <div id="admin-view-promos">
+      <p class="admin-section-title">Todas las promociones</p>
+      <div id="admin-promos-list"><div class="loading">Cargando...</div></div>
+    </div>
+    <div id="admin-view-usuarios" style="display:none">
+      <p class="admin-section-title">Usuarios registrados</p>
+      <div id="admin-usuarios-list"><div class="loading">Cargando...</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL CARGAR PROMO -->
 <div class="modal-overlay" id="modal-promo">
   <div class="modal">
     <div class="modal-header"><span class="modal-title">Cargar descuento</span><button class="btn-close" id="btn-close-promo">✕</button></div>
@@ -305,11 +362,33 @@
   </div>
 </div>
 
+<!-- MODAL ZONA -->
 <div class="modal-overlay" id="modal-zona">
   <div class="modal">
     <div class="modal-header"><span class="modal-title">Filtrar por zona</span><button class="btn-close" id="btn-close-zona">✕</button></div>
     <p style="font-size:13px;color:var(--gray);margin-bottom:16px">Las promos nacionales siempre se muestran.</p>
     <div class="zona-grid" id="zona-grid"></div>
+  </div>
+</div>
+
+<!-- MODAL PIN ADMIN -->
+<div class="modal-overlay" id="modal-admin-pin">
+  <div class="modal" style="max-height:420px">
+    <div class="modal-header"><span class="modal-title">🔐 Acceso admin</span><button class="btn-close" id="btn-close-pin">✕</button></div>
+    <p style="font-size:13px;color:var(--gray);margin-bottom:16px;text-align:center">Ingresá el PIN de administrador</p>
+    <div class="pin-display" id="pin-display">
+      <div class="pin-dot" id="dot-0"></div>
+      <div class="pin-dot" id="dot-1"></div>
+      <div class="pin-dot" id="dot-2"></div>
+      <div class="pin-dot" id="dot-3"></div>
+    </div>
+    <div class="pin-pad">
+      <button class="pin-btn" data-n="1">1</button><button class="pin-btn" data-n="2">2</button><button class="pin-btn" data-n="3">3</button>
+      <button class="pin-btn" data-n="4">4</button><button class="pin-btn" data-n="5">5</button><button class="pin-btn" data-n="6">6</button>
+      <button class="pin-btn" data-n="7">7</button><button class="pin-btn" data-n="8">8</button><button class="pin-btn" data-n="9">9</button>
+      <button class="pin-btn" data-n="del" style="font-size:16px">⌫</button><button class="pin-btn" data-n="0">0</button><button class="pin-btn" data-n="ok" style="font-size:14px;background:var(--blue);color:#fff;border-color:var(--blue)">OK</button>
+    </div>
+    <p class="pin-error" id="pin-error">PIN incorrecto</p>
   </div>
 </div>
 
@@ -319,12 +398,15 @@
 <script type="module">
 import{initializeApp}from"firebase/app";
 import{getAuth,createUserWithEmailAndPassword,signInWithEmailAndPassword,signOut,onAuthStateChanged}from"firebase/auth";
-import{getFirestore,collection,addDoc,getDocs,doc,getDoc,updateDoc,increment,query,where,orderBy,limit,serverTimestamp,Timestamp}from"firebase/firestore";
+import{getFirestore,collection,addDoc,getDocs,doc,getDoc,updateDoc,deleteDoc,increment,query,where,orderBy,limit,serverTimestamp,Timestamp}from"firebase/firestore";
 
-// 🔧 REEMPLAZAR CON DATOS REALES DEL PROYECTO AHORRAR EN FIREBASE
+// 🔧 FIREBASE CONFIG
 const FIREBASE_CONFIG={apiKey:"AIzaSyAeZzHwKCBuzp3jkXHuKM6_3_UJxyV4znA",authDomain:"ahorrar-rt.firebaseapp.com",projectId:"ahorrar-rt",storageBucket:"ahorrar-rt.firebasestorage.app",messagingSenderId:"207548156090",appId:"1:207548156090:web:bc3ed84cee6c67f6b21a83"};
-const LIMITE_DIARIO=20;
 
+// 🔐 PIN ADMIN — cambiar por el número que quieras
+const ADMIN_PIN = "1990";
+
+const LIMITE_DIARIO=20;
 const app=initializeApp(FIREBASE_CONFIG);
 const auth=getAuth(app);
 const db=getFirestore(app);
@@ -337,14 +419,16 @@ const ZONAS=['Nacional','Capital Federal','Gran Buenos Aires','Buenos Aires (int
 
 let currentUser=null,isAdmin=false,userZona='Nacional',allPromos=[],diasSel=[];
 let catHoy='todos',catExplorar='todos',zonaHoy='Nacional',zonaExplorar='Nacional',zonaModalTarget='hoy',diaSelIdx=HOY_IDX;
+let logoTapCount=0,logoTapTimer=null;
+let pinBuffer='';
 
-// TEMA
+// ── TEMA ──────────────────────────────────────────────────────────────────────
 function initTheme(){applyTheme(localStorage.getItem('ahorrar-theme')||'light');}
 function applyTheme(t){document.documentElement.setAttribute('data-theme',t);document.getElementById('btn-theme').textContent=t==='dark'?'🌞':'🌙';localStorage.setItem('ahorrar-theme',t);}
 function toggleTheme(){const c=document.documentElement.getAttribute('data-theme')||'light';applyTheme(c==='dark'?'light':'dark');}
 initTheme();
 
-// HELPERS
+// ── HELPERS ───────────────────────────────────────────────────────────────────
 function showToast(m){const t=document.getElementById('toast');t.textContent=m;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2800);}
 function openModal(id){document.getElementById(id).classList.add('open');}
 function closeModal(id){document.getElementById(id).classList.remove('open');}
@@ -352,7 +436,144 @@ function emptyHTML(i,t,s){return`<div class="empty-state"><div class="icon">${i}
 function capitalize(s){return s.charAt(0).toUpperCase()+s.slice(1);}
 function mapsURL(e){return`https://www.google.com/maps/search/${encodeURIComponent(e+' cerca de mí')}`;}
 
-// AUTH STATE
+// ── GESTO LOGO — 5 toques para abrir pin ─────────────────────────────────────
+document.getElementById('header-logo').addEventListener('click',()=>{
+  logoTapCount++;
+  clearTimeout(logoTapTimer);
+  if(logoTapCount>=5){logoTapCount=0;openPinModal();return;}
+  logoTapTimer=setTimeout(()=>logoTapCount=0,2000);
+});
+
+// ── MODAL PIN ─────────────────────────────────────────────────────────────────
+function openPinModal(){pinBuffer='';updatePinDots();document.getElementById('pin-error').style.display='none';openModal('modal-admin-pin');}
+
+function updatePinDots(){
+  for(let i=0;i<4;i++){
+    const dot=document.getElementById(`dot-${i}`);
+    dot.classList.toggle('filled',i<pinBuffer.length);
+  }
+}
+
+document.querySelector('.pin-pad').addEventListener('click',(e)=>{
+  const btn=e.target.closest('.pin-btn');if(!btn)return;
+  const n=btn.dataset.n;
+  if(n==='del'){pinBuffer=pinBuffer.slice(0,-1);updatePinDots();return;}
+  if(n==='ok'){checkPin();return;}
+  if(pinBuffer.length<4){pinBuffer+=n;updatePinDots();}
+  if(pinBuffer.length===4){checkPin();}
+});
+
+function checkPin(){
+  if(pinBuffer===ADMIN_PIN){
+    closeModal('modal-admin-pin');
+    openAdminPanel();
+  }else{
+    document.getElementById('pin-error').style.display='block';
+    pinBuffer='';updatePinDots();
+    setTimeout(()=>document.getElementById('pin-error').style.display='none',1500);
+  }
+}
+
+// ── PANEL ADMIN ───────────────────────────────────────────────────────────────
+async function openAdminPanel(){
+  document.getElementById('app-screen').style.display='none';
+  document.getElementById('admin-screen').style.display='block';
+  await loadAdminPromos();
+}
+
+function closeAdminPanel(){
+  document.getElementById('admin-screen').style.display='none';
+  document.getElementById('app-screen').style.display='block';
+}
+
+async function loadAdminPromos(){
+  const container=document.getElementById('admin-promos-list');
+  container.innerHTML='<div class="loading">Cargando...</div>';
+  const snap=await getDocs(query(collection(db,'promociones'),orderBy('createdAt','desc'),limit(200)));
+  if(snap.empty){container.innerHTML=emptyHTML('🏷️','Sin promos','No hay ninguna cargada');return;}
+  container.innerHTML=snap.docs.map(d=>{
+    const p=d.data();
+    return`<div class="admin-card">
+      <div class="admin-card-title">${p.empresa} — ${p.descuento}</div>
+      <div class="admin-card-sub">📍 ${p.zona||'Nacional'} · ${p.categoria} · ✓ ${p.confirmaciones||0} confirmaciones</div>
+      <div class="admin-card-actions">
+        <button class="btn-admin-edit" data-id="${d.id}">✏️ Editar</button>
+        <button class="btn-ban" data-id="${d.id}" data-type="promo">🗑️ Eliminar</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+async function loadAdminUsuarios(){
+  const container=document.getElementById('admin-usuarios-list');
+  container.innerHTML='<div class="loading">Cargando...</div>';
+  const snap=await getDocs(query(collection(db,'usuarios'),orderBy('createdAt','desc')));
+  if(snap.empty){container.innerHTML=emptyHTML('👥','Sin usuarios','No hay ninguno registrado');return;}
+  container.innerHTML=snap.docs.map(d=>{
+    const u=d.data();
+    const banned=u.banned===true;
+    return`<div class="admin-card ${banned?'user-banned':''}">
+      <div class="admin-card-title">${u.email||'—'}${banned?'<span class="ban-badge">BANEADO</span>':''}</div>
+      <div class="admin-card-sub">📍 ${u.zona||'—'} · ${u.isAdmin?'Admin':'Usuario'}</div>
+      <div class="admin-card-actions">
+        ${banned
+          ?`<button class="btn-unban" data-uid="${d.id}">✅ Desbanear</button>`
+          :`<button class="btn-ban" data-uid="${d.id}" data-type="user">🚫 Banear</button>`
+        }
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// Admin: clicks delegados en promos
+document.getElementById('admin-promos-list').addEventListener('click',async(e)=>{
+  const del=e.target.closest('[data-type="promo"]');
+  const edit=e.target.closest('.btn-admin-edit');
+  if(del){
+    if(!confirm('¿Eliminar esta promo?'))return;
+    await deleteDoc(doc(db,'promociones',del.dataset.id));
+    showToast('Promo eliminada');
+    await loadAdminPromos();
+    await loadPromos();
+  }
+  if(edit){
+    showToast('Función de edición próximamente');
+  }
+});
+
+// Admin: clicks delegados en usuarios
+document.getElementById('admin-usuarios-list').addEventListener('click',async(e)=>{
+  const banBtn=e.target.closest('.btn-ban[data-uid]');
+  const unbanBtn=e.target.closest('.btn-unban');
+  if(banBtn){
+    if(!confirm('¿Banear este usuario?'))return;
+    await updateDoc(doc(db,'usuarios',banBtn.dataset.uid),{banned:true});
+    showToast('Usuario baneado');await loadAdminUsuarios();
+  }
+  if(unbanBtn){
+    await updateDoc(doc(db,'usuarios',unbanBtn.dataset.uid),{banned:false});
+    showToast('Usuario desbaneado');await loadAdminUsuarios();
+  }
+});
+
+// Admin tabs
+document.getElementById('atab-promos').addEventListener('click',()=>{
+  document.getElementById('admin-view-promos').style.display='block';
+  document.getElementById('admin-view-usuarios').style.display='none';
+  document.getElementById('atab-promos').classList.add('active');
+  document.getElementById('atab-usuarios').classList.remove('active');
+  loadAdminPromos();
+});
+document.getElementById('atab-usuarios').addEventListener('click',()=>{
+  document.getElementById('admin-view-promos').style.display='none';
+  document.getElementById('admin-view-usuarios').style.display='block';
+  document.getElementById('atab-usuarios').classList.add('active');
+  document.getElementById('atab-promos').classList.remove('active');
+  loadAdminUsuarios();
+});
+document.getElementById('btn-admin-exit').addEventListener('click',closeAdminPanel);
+
+// ── AUTH STATE ────────────────────────────────────────────────────────────────
 onAuthStateChanged(auth,async(user)=>{
   if(user){
     currentUser=user;
@@ -374,10 +595,11 @@ onAuthStateChanged(auth,async(user)=>{
     currentUser=null;
     document.getElementById('auth-screen').style.display='flex';
     document.getElementById('app-screen').style.display='none';
+    document.getElementById('admin-screen').style.display='none';
   }
 });
 
-// AUTH ACTIONS
+// ── AUTH ACTIONS ──────────────────────────────────────────────────────────────
 async function doLogin(){
   const email=document.getElementById('login-email').value.trim();
   const pass=document.getElementById('login-pass').value;
@@ -392,12 +614,12 @@ async function doRegister(){
   const err=document.getElementById('reg-error');err.style.display='none';
   if(pass.length<6){err.textContent='Mínimo 6 caracteres';err.style.display='block';return;}
   if(!zona){err.textContent='Seleccioná tu provincia';err.style.display='block';return;}
-  try{const cred=await createUserWithEmailAndPassword(auth,email,pass);await addDoc(collection(db,'usuarios'),{uid:cred.user.uid,email,zona,isAdmin:false,createdAt:serverTimestamp()});}
+  try{const cred=await createUserWithEmailAndPassword(auth,email,pass);await addDoc(collection(db,'usuarios'),{uid:cred.user.uid,email,zona,isAdmin:false,banned:false,createdAt:serverTimestamp()});}
   catch{err.textContent='Error al crear la cuenta. El email puede estar en uso.';err.style.display='block';}
 }
 async function doLogout(){await signOut(auth);}
 
-// RATE LIMIT
+// ── RATE LIMIT ────────────────────────────────────────────────────────────────
 async function checkRateLimit(){
   const box=document.getElementById('rate-info');
   if(isAdmin){box.className='rate-info admin';box.textContent='⭐ Cuenta admin — sin límite diario';return true;}
@@ -408,7 +630,7 @@ async function checkRateLimit(){
   box.className='rate-info';box.textContent=`✅ Podés cargar ${r} promo${r===1?'':'s'} más hoy`;return true;
 }
 
-// LOAD PROMOS
+// ── LOAD PROMOS ───────────────────────────────────────────────────────────────
 async function loadPromos(){
   try{
     const snap=await getDocs(query(collection(db,'promociones'),orderBy('confirmaciones','desc'),limit(300)));
@@ -423,11 +645,11 @@ async function loadPromos(){
   }catch(e){console.error(e);showToast('Error cargando promociones');}
 }
 
-// SORT / FILTER
+// ── SORT / FILTER ─────────────────────────────────────────────────────────────
 function sortPromos(l){return[...l].sort((a,b)=>{const p=x=>x.zona===userZona?0:x.zona==='Nacional'?1:2;if(p(a)!==p(b))return p(a)-p(b);return(b.confirmaciones||0)-(a.confirmaciones||0);});}
 function matchZona(p,z){return z==='Nacional'||p.zona==='Nacional'||p.zona===z;}
 
-// DAY SELECTOR
+// ── DAY SELECTOR ──────────────────────────────────────────────────────────────
 function buildDaySelector(){
   const hoy=new Date();const sel=document.getElementById('day-selector');sel.innerHTML='';
   for(let i=0;i<7;i++){
@@ -447,7 +669,7 @@ function updateBanner(offset){
   document.getElementById('section-label').textContent=esHoy?'Válidos hoy':`Válidos el ${capitalize(n)}`;
 }
 
-// RENDERS
+// ── RENDERS ───────────────────────────────────────────────────────────────────
 function renderHoy(){
   const df=DIAS_SEMANA[diaSelIdx];
   const lista=sortPromos(allPromos.filter(p=>(p.dias||[]).includes(df)&&matchZona(p,zonaHoy)&&(catHoy==='todos'||p.categoria===catHoy)));
@@ -472,7 +694,7 @@ function renderMisPromos(){
   document.getElementById('mis-promos').innerHTML=mis.length===0?'<p style="color:var(--gray);font-size:14px">Todavía no cargaste ninguna promo.</p>':mis.map(p=>`<div class="mis-item"><strong style="font-size:15px;color:var(--text)">${p.empresa}</strong><span style="color:var(--green);font-weight:700;margin-left:8px">${p.descuento}</span><div style="font-size:12px;color:var(--gray);margin-top:3px">📍 ${p.zona||'Nacional'} · ✓ ${p.confirmaciones||0} confirmaciones</div></div>`).join('');
 }
 
-// CARD
+// ── CARD HTML ─────────────────────────────────────────────────────────────────
 function cardHTML(p,diaRef){
   const dias=(p.dias||[]).map(d=>{const cls=d===diaRef?'seleccionado':d===HOY_NOMBRE?'hoy':'';return`<span class="dia-chip ${cls}">${d.substring(0,3)}</span>`;}).join('');
   let vence='';
@@ -481,10 +703,25 @@ function cardHTML(p,diaRef){
   const zonaStyle=esMiZona?'color:var(--blue);font-weight:700':'color:var(--gray)';
   const zonaText=esMiZona?`📍 ${p.zona} · Tu zona`:p.zona==='Nacional'?'🇦🇷 Nacional':`📍 ${p.zona}`;
   const yaConf=(p.confirmadoPor||[]).includes(currentUser?.uid);
-  return`<div class="promo-card"><div class="promo-header"><span class="promo-empresa">${p.empresa||'—'}</span><span class="promo-cat">${p.categoria||''}</span></div><div class="promo-descuento">${p.descuento||''}</div>${p.condicion?`<p class="promo-condicion">📋 ${p.condicion}</p>`:''}<p class="promo-zona-label" style="${zonaStyle}">${zonaText}</p><div class="promo-footer"><div class="promo-dias">${dias}</div><div class="promo-actions"><span class="confirmaciones">✓ ${p.confirmaciones||0}</span><button class="btn-confirmar ${yaConf?'confirmado':''}" data-id="${p.id}">${yaConf?'✓ Válida':'Confirmar'}</button><button class="btn-reportar" data-id="${p.id}" title="Reportar">⚑</button></div></div>${vence}<a class="btn-mapa" href="${mapsURL(p.empresa)}" target="_blank" rel="noopener">📍 Ver sucursales en el mapa</a></div>`;
+  return`<div class="promo-card">
+    <div class="promo-header"><span class="promo-empresa">${p.empresa||'—'}</span><span class="promo-cat">${p.categoria||''}</span></div>
+    <div class="promo-descuento">${p.descuento||''}</div>
+    ${p.condicion?`<p class="promo-condicion">📋 ${p.condicion}</p>`:''}
+    <p class="promo-zona-label" style="${zonaStyle}">${zonaText}</p>
+    <div class="promo-footer">
+      <div class="promo-dias">${dias}</div>
+      <div class="promo-actions">
+        <span class="confirmaciones">✓ ${p.confirmaciones||0}</span>
+        <button class="btn-confirmar ${yaConf?'confirmado':''}" data-id="${p.id}">${yaConf?'✓ Válida':'Confirmar'}</button>
+        <button class="btn-reportar" data-id="${p.id}" title="Reportar">⚑</button>
+      </div>
+    </div>
+    ${vence}
+    <a class="btn-mapa" href="${mapsURL(p.empresa)}" target="_blank" rel="noopener">📍 Ver sucursales en el mapa</a>
+  </div>`;
 }
 
-// CONFIRMAR / REPORTAR
+// ── CONFIRMAR / REPORTAR ──────────────────────────────────────────────────────
 document.addEventListener('click',async(e)=>{
   const btn=e.target.closest('.btn-confirmar,.btn-reportar');if(!btn||!currentUser)return;
   const id=btn.dataset.id;const ref=doc(db,'promociones',id);
@@ -498,7 +735,7 @@ document.addEventListener('click',async(e)=>{
   if(btn.classList.contains('btn-reportar')){await updateDoc(ref,{reportes:increment(1)});showToast('Promo reportada. Gracias.');await loadPromos();}
 });
 
-// GUARDAR PROMO
+// ── GUARDAR PROMO ─────────────────────────────────────────────────────────────
 async function guardarPromo(){
   const empresa=document.getElementById('f-empresa').value.trim();
   const categoria=document.getElementById('f-categoria').value;
@@ -514,7 +751,7 @@ async function guardarPromo(){
   }catch(e){console.error(e);showToast('Error al guardar. Intentá de nuevo.');}
 }
 
-// ZONA MODAL
+// ── ZONA MODAL ────────────────────────────────────────────────────────────────
 function openZonaModal(target){
   zonaModalTarget=target;const actual=target==='hoy'?zonaHoy:zonaExplorar;
   document.getElementById('zona-grid').innerHTML=ZONAS.map(z=>`<button class="zona-opt ${z==='Nacional'?'nacional':''} ${z===actual?'selected':''}" data-zona="${z}">${z==='Nacional'?'🇦🇷 ':'📍 '}${z}</button>`).join('');
@@ -527,13 +764,13 @@ document.getElementById('zona-grid').addEventListener('click',(e)=>{
   closeModal('modal-zona');
 });
 
-// TABS
+// ── TABS ──────────────────────────────────────────────────────────────────────
 function showTab(tab){
   ['hoy','explorar','perfil'].forEach(t=>{document.getElementById(`view-${t}`).style.display=t===tab?'block':'none';document.getElementById(`tab-${t}`).classList.toggle('active',t===tab);});
   if(tab==='perfil')renderMisPromos();if(tab==='explorar')renderExplorar();
 }
 
-// OPEN PROMO MODAL
+// ── MODAL PROMO ───────────────────────────────────────────────────────────────
 async function openPromoModal(){
   diasSel=[];document.querySelectorAll('.dia-btn').forEach(b=>b.classList.remove('selected'));
   ['f-empresa','f-descuento','f-condicion'].forEach(id=>document.getElementById(id).value='');
@@ -541,19 +778,19 @@ async function openPromoModal(){
   await checkRateLimit();openModal('modal-promo');
 }
 
-// FILTROS
+// ── FILTROS ───────────────────────────────────────────────────────────────────
 document.getElementById('filters-hoy').addEventListener('click',(e)=>{const c=e.target.closest('.filter-chip');if(!c)return;document.querySelectorAll('#filters-hoy .filter-chip').forEach(x=>x.classList.remove('active'));c.classList.add('active');catHoy=c.dataset.cat;renderHoy();});
 document.getElementById('filters-explorar').addEventListener('click',(e)=>{const c=e.target.closest('.filter-chip');if(!c)return;document.querySelectorAll('#filters-explorar .filter-chip').forEach(x=>x.classList.remove('active'));c.classList.add('active');catExplorar=c.dataset.cat;renderExplorar();});
 document.getElementById('search-input').addEventListener('input',renderExplorar);
 
-// DIAS
+// ── DIAS ──────────────────────────────────────────────────────────────────────
 document.querySelectorAll('.dia-btn[data-dia]').forEach(btn=>{btn.addEventListener('click',()=>{const dia=btn.dataset.dia;if(diasSel.includes(dia)){diasSel=diasSel.filter(d=>d!==dia);btn.classList.remove('selected');}else{diasSel.push(dia);btn.classList.add('selected');}});});
 document.getElementById('btn-todos-dias').addEventListener('click',()=>{const todos=['lunes','martes','miércoles','jueves','viernes','sábado','domingo'];if(diasSel.length===7){diasSel=[];document.querySelectorAll('.dia-btn[data-dia]').forEach(b=>b.classList.remove('selected'));}else{diasSel=[...todos];document.querySelectorAll('.dia-btn[data-dia]').forEach(b=>b.classList.add('selected'));}});
 
-// CERRAR MODALES FUERA
-['modal-promo','modal-zona'].forEach(id=>{document.getElementById(id).addEventListener('click',e=>{if(e.target.id===id)closeModal(id);});});
+// ── CERRAR MODALES FUERA ──────────────────────────────────────────────────────
+['modal-promo','modal-zona','modal-admin-pin'].forEach(id=>{document.getElementById(id).addEventListener('click',e=>{if(e.target.id===id)closeModal(id);});});
 
-// BIND
+// ── BIND ──────────────────────────────────────────────────────────────────────
 document.getElementById('btn-login').addEventListener('click',doLogin);
 document.getElementById('btn-register').addEventListener('click',doRegister);
 document.getElementById('btn-logout').addEventListener('click',doLogout);
@@ -562,6 +799,7 @@ document.getElementById('btn-fab').addEventListener('click',openPromoModal);
 document.getElementById('btn-theme').addEventListener('click',toggleTheme);
 document.getElementById('btn-close-promo').addEventListener('click',()=>closeModal('modal-promo'));
 document.getElementById('btn-close-zona').addEventListener('click',()=>closeModal('modal-zona'));
+document.getElementById('btn-close-pin').addEventListener('click',()=>closeModal('modal-admin-pin'));
 document.getElementById('btn-guardar-promo').addEventListener('click',guardarPromo);
 document.getElementById('btn-zona-hoy').addEventListener('click',()=>openZonaModal('hoy'));
 document.getElementById('btn-zona-explorar').addEventListener('click',()=>openZonaModal('explorar'));
@@ -573,7 +811,7 @@ document.getElementById('tab-perfil').addEventListener('click',()=>showTab('perf
 </script>
 
 <!--
-FIRESTORE SECURITY RULES — pegar en Firebase Console > Firestore > Reglas
+FIRESTORE SECURITY RULES — agregar deleteDoc a promociones:
 
 rules_version = '2';
 service cloud.firestore {
@@ -596,17 +834,13 @@ service cloud.firestore {
         && request.resource.data.dias.size() <= 7;
       allow update: if request.auth != null
         && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['confirmaciones','confirmadoPor','reportes']);
-      allow delete: if request.auth != null && resource.data.creadoPor == request.auth.uid;
+      allow delete: if request.auth != null;
+    }
+    match /usuarios/{userId} {
+      allow update: if request.auth != null;
     }
   }
 }
-
-ÍNDICES COMPUESTOS — Firebase Console > Firestore > Índices > Compuestos
-1. promociones | confirmaciones DESC, createdAt DESC
-2. promociones | zona ASC, confirmaciones DESC
-3. promociones | categoria ASC, confirmaciones DESC
-4. promociones | creadoPor ASC, createdAt DESC
-5. promociones | creadoPor ASC, createdAt ASC
 -->
 </body>
 </html>
