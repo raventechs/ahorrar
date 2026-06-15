@@ -184,6 +184,26 @@
   .pin-error{color:var(--red);font-size:13px;font-weight:600;text-align:center;margin-top:8px;display:none;}
   /* MODAL EDITAR PROMO ADMIN */
   @media(max-width:390px){.promo-descuento{font-size:22px;}.dias-grid{grid-template-columns:repeat(3,1fr);}.zona-grid{grid-template-columns:1fr;}.pin-pad{gap:8px;}.pin-btn{padding:14px;font-size:18px;}}
+  /* DEMO VENCIDA */
+  #demo-wall{position:fixed;inset:0;background:linear-gradient(145deg,#0f1e3d,#1a3060);display:none;align-items:center;justify-content:center;z-index:9990;padding:24px;}
+  #demo-wall.open{display:flex;}
+  .demo-card{background:#fff;border-radius:20px;padding:36px 28px;width:100%;max-width:380px;text-align:center;box-shadow:0 32px 80px rgba(0,0,0,.4);}
+  [data-theme="dark"] .demo-card{background:#1e293b;}
+  .demo-icon{font-size:56px;margin-bottom:16px;}
+  .demo-title{font-size:22px;font-weight:800;color:#0f1e3d;margin-bottom:8px;}
+  [data-theme="dark"] .demo-title{color:#f1f5f9;}
+  .demo-sub{font-size:14px;color:#64748b;line-height:1.6;margin-bottom:24px;}
+  .btn-demo-email{display:flex;align-items:center;justify-content:center;gap:10px;width:100%;padding:14px;background:#0f1e3d;color:#fff;border:none;border-radius:10px;font-size:15px;font-weight:700;cursor:pointer;text-decoration:none;margin-bottom:10px;font-family:'Inter',sans-serif;}
+  .btn-demo-logout{font-size:13px;color:#64748b;cursor:pointer;text-decoration:underline;background:none;border:none;font-family:'Inter',sans-serif;margin-top:4px;}
+  .demo-countdown{font-size:11px;font-weight:700;background:rgba(240,184,74,.25);color:#f0b84a;padding:4px 10px;border-radius:99px;margin-left:6px;}
+  .demo-countdown.urgente{background:rgba(239,68,68,.25);color:#fca5a5;}
+  /* ADMIN DEMO BADGES Y BOTONES */
+  .btn-ext{flex:1;padding:8px;background:#dbeafe;border:1.5px solid #93c5fd;border-radius:8px;color:#1d4ed8;font-size:12px;font-weight:700;cursor:pointer;font-family:'Inter',sans-serif;}
+  .btn-act{flex:1;padding:8px;background:#f0fdf4;border:1.5px solid #bbf7d0;border-radius:8px;color:#166534;font-size:12px;font-weight:700;cursor:pointer;font-family:'Inter',sans-serif;}
+  .demo-badge{font-size:10px;font-weight:700;padding:2px 6px;border-radius:6px;margin-left:6px;}
+  .demo-badge.activa{background:#fef3c7;color:#d97706;}
+  .demo-badge.vencida{background:#fee2e2;color:#dc2626;}
+  .demo-badge.completa{background:#dcfce7;color:#16a34a;}
 </style>
 </head>
 <body>
@@ -397,13 +417,24 @@
   </div>
 </div>
 
+<!-- DEMO VENCIDA -->
+<div id="demo-wall">
+  <div class="demo-card">
+    <div class="demo-icon">⏳</div>
+    <div class="demo-title">Tu demo de 24hs terminó</div>
+    <div class="demo-sub">Gracias por probar AhorrAR. Para seguir accediendo a los descuentos, contactanos y te activamos tu cuenta.</div>
+    <a href="mailto:raventechs@gmail.com?subject=Quiero activar AhorrAR&body=Hola, probé la demo y me interesa continuar." class="btn-demo-email">✉️ Contactar por email</a>
+    <button class="btn-demo-logout" id="btn-demo-logout">Cerrar sesión</button>
+  </div>
+</div>
+
 <div class="toast" id="toast"></div>
 
 <script type="importmap">{"imports":{"firebase/app":"https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js","firebase/auth":"https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js","firebase/firestore":"https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js"}}</script>
 <script type="module">
 import{initializeApp}from"firebase/app";
 import{getAuth,createUserWithEmailAndPassword,signInWithEmailAndPassword,signOut,onAuthStateChanged,GoogleAuthProvider,signInWithPopup}from"firebase/auth";
-import{getFirestore,collection,addDoc,getDocs,doc,getDoc,updateDoc,deleteDoc,increment,query,where,orderBy,limit,serverTimestamp,Timestamp}from"firebase/firestore";
+import{getFirestore,collection,addDoc,setDoc,getDocs,doc,getDoc,updateDoc,deleteDoc,increment,query,where,orderBy,limit,serverTimestamp,Timestamp}from"firebase/firestore";
 
 // 🔧 FIREBASE CONFIG
 const FIREBASE_CONFIG={apiKey:"AIzaSyAeZzHwKCBuzp3jkXHuKM6_3_UJxyV4znA",authDomain:"ahorrar-rt.firebaseapp.com",projectId:"ahorrar-rt",storageBucket:"ahorrar-rt.firebasestorage.app",messagingSenderId:"207548156090",appId:"1:207548156090:web:bc3ed84cee6c67f6b21a83"};
@@ -514,18 +545,42 @@ async function loadAdminUsuarios(){
   container.innerHTML='<div class="loading">Cargando...</div>';
   const snap=await getDocs(query(collection(db,'usuarios'),orderBy('createdAt','desc')));
   if(snap.empty){container.innerHTML=emptyHTML('👥','Sin usuarios','No hay ninguno registrado');return;}
+  const ahora=Date.now();
   container.innerHTML=snap.docs.map(d=>{
     const u=d.data();
     const banned=u.banned===true;
+    let demoBadge='';let demoInfo='';let demoActions='';
+    if(u.status==='activo'){
+      demoBadge='<span class="demo-badge completa">ACTIVO</span>';
+    } else {
+      const start=u.demoStart?.toMillis?.()||0;
+      const expiry=u.demoExpiry?.toMillis?.()||start+86400000;
+      const restante=expiry-ahora;
+      if(restante>0){
+        const h=Math.floor(restante/3600000);const m=Math.floor((restante%3600000)/60000);
+        demoBadge='<span class="demo-badge activa">DEMO</span>';
+        demoInfo=`<div style="font-size:11px;color:#d97706;margin-top:4px">⏱ Vence en ${h}h ${m}m</div>`;
+      } else {
+        demoBadge='<span class="demo-badge vencida">VENCIDA</span>';
+        demoInfo='<div style="font-size:11px;color:#dc2626;margin-top:4px">Demo vencida</div>';
+      }
+      demoActions=`<div style="display:flex;gap:6px;align-items:center;margin-top:8px;flex-wrap:wrap">
+        <input type="number" min="1" max="30" value="7" style="width:56px;padding:6px;border:1.5px solid var(--border);border-radius:6px;font-size:12px;font-family:'Inter',sans-serif" data-ext-uid="${d.id}"/>
+        <button class="btn-ext" data-uid="${d.id}">⏱ Extender demo</button>
+        <button class="btn-act" data-uid="${d.id}">✅ Activar completo</button>
+      </div>`;
+    }
     return`<div class="admin-card ${banned?'user-banned':''}">
-      <div class="admin-card-title">${u.email||'—'}${banned?'<span class="ban-badge">BANEADO</span>':''}</div>
+      <div class="admin-card-title">${u.email||'—'}${banned?'<span class="ban-badge">BANEADO</span>':''} ${demoBadge}</div>
       <div class="admin-card-sub">📍 ${u.zona||'—'} · ${u.isAdmin?'Admin':'Usuario'}</div>
-      <div class="admin-card-actions">
+      ${demoInfo}
+      <div class="admin-card-actions" style="margin-top:8px">
         ${banned
           ?`<button class="btn-unban" data-uid="${d.id}">✅ Desbanear</button>`
           :`<button class="btn-ban" data-uid="${d.id}" data-type="user">🚫 Banear</button>`
         }
       </div>
+      ${demoActions}
     </div>`;
   }).join('');
 }
@@ -550,6 +605,8 @@ document.getElementById('admin-promos-list').addEventListener('click',async(e)=>
 document.getElementById('admin-usuarios-list').addEventListener('click',async(e)=>{
   const banBtn=e.target.closest('.btn-ban[data-uid]');
   const unbanBtn=e.target.closest('.btn-unban');
+  const extBtn=e.target.closest('.btn-ext');
+  const actBtn=e.target.closest('.btn-act');
   if(banBtn){
     if(!confirm('¿Banear este usuario?'))return;
     await updateDoc(doc(db,'usuarios',banBtn.dataset.uid),{banned:true});
@@ -558,6 +615,20 @@ document.getElementById('admin-usuarios-list').addEventListener('click',async(e)
   if(unbanBtn){
     await updateDoc(doc(db,'usuarios',unbanBtn.dataset.uid),{banned:false});
     showToast('Usuario desbaneado');await loadAdminUsuarios();
+  }
+  if(extBtn){
+    const diasInput=document.querySelector(`input[data-ext-uid="${extBtn.dataset.uid}"]`);
+    const dias=parseInt(diasInput?.value)||7;
+    const snap=await getDoc(doc(db,'usuarios',extBtn.dataset.uid));
+    const u=snap.data();
+    const baseMs=u.demoExpiry?.toMillis?.()||((u.demoStart?.toMillis?.()||Date.now())+86400000);
+    const nuevoExpiry=new Date(Math.max(baseMs,Date.now())+dias*86400000);
+    await updateDoc(doc(db,'usuarios',extBtn.dataset.uid),{demoExpiry:Timestamp.fromDate(nuevoExpiry),status:'demo'});
+    showToast(`Demo extendida ${dias} días ✅`);await loadAdminUsuarios();
+  }
+  if(actBtn&&confirm('¿Activar cuenta completa sin límite?')){
+    await updateDoc(doc(db,'usuarios',actBtn.dataset.uid),{status:'activo',demoExpiry:null});
+    showToast('Cuenta activada ✅');await loadAdminUsuarios();
   }
 });
 
@@ -578,13 +649,60 @@ document.getElementById('atab-usuarios').addEventListener('click',()=>{
 });
 document.getElementById('btn-admin-exit').addEventListener('click',closeAdminPanel);
 
+// ── DEMO HELPERS ──────────────────────────────────────────────────────────────
+const DEMO_MS=24*60*60*1000;
+let userDoc=null;
+
+function getDemoRestante(data){
+  if(data.status==='activo')return Infinity;
+  const start=data.demoStart?.toMillis?.()||0;
+  const expiry=data.demoExpiry?.toMillis?.()||start+DEMO_MS;
+  return expiry-Date.now();
+}
+
+function checkDemo(){
+  if(!userDoc)return;
+  const restante=getDemoRestante(userDoc);
+  if(restante===Infinity)return;
+  if(restante<=0){
+    document.getElementById('demo-wall').classList.add('open');
+    return;
+  }
+  // Mostrar countdown en header
+  const h=Math.floor(restante/3600000);
+  const m=Math.floor((restante%3600000)/60000);
+  const urgente=restante<3600000;
+  const cd=document.createElement('span');
+  cd.className='demo-countdown'+(urgente?' urgente':'');
+  cd.textContent='⏱ '+(h>0?h+'h '+m+'m':m+'m');
+  document.querySelector('.header-right')?.appendChild(cd);
+}
+
+document.getElementById('btn-demo-logout').addEventListener('click',()=>signOut(auth));
+
 // ── AUTH STATE ────────────────────────────────────────────────────────────────
 onAuthStateChanged(auth,async(user)=>{
   if(user){
     currentUser=user;
-    const snap=await getDoc(doc(db,'usuarios',user.uid));
-    isAdmin=snap.exists()&&snap.data().isAdmin===true;
-    userZona=snap.exists()&&snap.data().zona?snap.data().zona:'Nacional';
+    const userRef=doc(db,'usuarios',user.uid);
+    let snap=await getDoc(userRef);
+
+    // Nuevo usuario (Google) — crear documento con demo
+    if(!snap.exists()){
+      await setDoc(userRef,{
+        uid:user.uid,email:user.email,zona:'Nacional',
+        isAdmin:false,banned:false,
+        status:'demo',demoStart:serverTimestamp(),
+        createdAt:serverTimestamp()
+      });
+      snap=await getDoc(userRef);
+    }
+
+    userDoc=snap.data();
+    if(userDoc.banned){showToast('Cuenta suspendida');await signOut(auth);return;}
+
+    isAdmin=userDoc.isAdmin===true;
+    userZona=userDoc.zona||'Nacional';
     zonaHoy=zonaExplorar=userZona;
     document.getElementById('auth-screen').style.display='none';
     document.getElementById('app-screen').style.display='block';
@@ -596,8 +714,10 @@ onAuthStateChanged(auth,async(user)=>{
     document.getElementById('header-date').textContent=new Date().toLocaleDateString('es-AR',opts);
     diaSelIdx=HOY_IDX;buildDaySelector();updateBanner(0);
     await loadPromos();
+    checkDemo();
   }else{
-    currentUser=null;
+    currentUser=null;userDoc=null;
+    document.getElementById('demo-wall').classList.remove('open');
     document.getElementById('auth-screen').style.display='flex';
     document.getElementById('app-screen').style.display='none';
     document.getElementById('admin-screen').style.display='none';
@@ -619,7 +739,13 @@ async function doRegister(){
   const err=document.getElementById('reg-error');err.style.display='none';
   if(pass.length<6){err.textContent='Mínimo 6 caracteres';err.style.display='block';return;}
   if(!zona){err.textContent='Seleccioná tu provincia';err.style.display='block';return;}
-  try{const cred=await createUserWithEmailAndPassword(auth,email,pass);await addDoc(collection(db,'usuarios'),{uid:cred.user.uid,email,zona,isAdmin:false,banned:false,createdAt:serverTimestamp()});}
+  try{
+    const cred=await createUserWithEmailAndPassword(auth,email,pass);
+    await setDoc(doc(db,'usuarios',cred.user.uid),{
+      uid:cred.user.uid,email,zona,isAdmin:false,banned:false,
+      status:'demo',demoStart:serverTimestamp(),createdAt:serverTimestamp()
+    });
+  }
   catch{err.textContent='Error al crear la cuenta. El email puede estar en uso.';err.style.display='block';}
 }
 async function doLogout(){await signOut(auth);}
