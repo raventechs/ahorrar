@@ -3,6 +3,12 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="Descubrí y compartí promociones y descuentos en tu zona.">
+<meta name="theme-color" content="#0f1e3d">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="AhorrAR">
 <title>AhorrAR</title>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
@@ -423,7 +429,7 @@
     <div class="demo-icon">⏳</div>
     <div class="demo-title">Tu demo de 24hs terminó</div>
     <div class="demo-sub">Gracias por probar AhorrAR. Para seguir accediendo a los descuentos, contactanos y te activamos tu cuenta.</div>
-    <a href="mailto:raventechs@gmail.com?subject=Quiero activar AhorrAR&body=Hola, probé la demo y me interesa continuar." class="btn-demo-email">✉️ Contactar por email</a>
+    <a href="mailto:ventas@raventechsapp.com?subject=Quiero activar AhorrAR&body=Hola, probé la demo y me interesa continuar." class="btn-demo-email">✉️ Contactar por email</a>
     <button class="btn-demo-logout" id="btn-demo-logout">Cerrar sesión</button>
   </div>
 </div>
@@ -446,6 +452,8 @@ const LIMITE_DIARIO=20;
 const app=initializeApp(FIREBASE_CONFIG);
 const auth=getAuth(app);
 const db=getFirestore(app);
+
+function sanitizeHTML(str){const d=document.createElement('div');d.textContent=str??"";return d.innerHTML;}
 
 const DIAS_SEMANA=['domingo','lunes','martes','miércoles','jueves','viernes','sábado'];
 const DIAS_CORTO=['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'];
@@ -530,8 +538,8 @@ async function loadAdminPromos(){
   container.innerHTML=snap.docs.map(d=>{
     const p=d.data();
     return`<div class="admin-card">
-      <div class="admin-card-title">${p.empresa} — ${p.descuento}</div>
-      <div class="admin-card-sub">📍 ${p.zona||'Nacional'} · ${p.categoria} · ✓ ${p.confirmaciones||0} confirmaciones</div>
+      <div class="admin-card-title">${sanitizeHTML(p.empresa)} — ${sanitizeHTML(p.descuento)}</div>
+      <div class="admin-card-sub">📍 ${sanitizeHTML(p.zona||'Nacional')} · ${sanitizeHTML(p.categoria)} · ✓ ${p.confirmaciones||0} confirmaciones</div>
       <div class="admin-card-actions">
         <button class="btn-admin-edit" data-id="${d.id}">✏️ Editar</button>
         <button class="btn-ban" data-id="${d.id}" data-type="promo">🗑️ Eliminar</button>
@@ -822,7 +830,7 @@ function renderMisPromos(){
   const mis=allPromos.filter(p=>p.creadoPor===currentUser?.uid);
   document.getElementById('stat-cargadas').textContent=mis.length;
   document.getElementById('stat-confirmadas').textContent=allPromos.filter(p=>(p.confirmadoPor||[]).includes(currentUser?.uid)).length;
-  document.getElementById('mis-promos').innerHTML=mis.length===0?'<p style="color:var(--gray);font-size:14px">Todavía no cargaste ninguna promo.</p>':mis.map(p=>`<div class="mis-item"><strong style="font-size:15px;color:var(--text)">${p.empresa}</strong><span style="color:var(--green);font-weight:700;margin-left:8px">${p.descuento}</span><div style="font-size:12px;color:var(--gray);margin-top:3px">📍 ${p.zona||'Nacional'} · ✓ ${p.confirmaciones||0} confirmaciones</div></div>`).join('');
+  document.getElementById('mis-promos').innerHTML=mis.length===0?'<p style="color:var(--gray);font-size:14px">Todavía no cargaste ninguna promo.</p>':mis.map(p=>`<div class="mis-item"><strong style="font-size:15px;color:var(--text)">${sanitizeHTML(p.empresa)}</strong><span style="color:var(--green);font-weight:700;margin-left:8px">${sanitizeHTML(p.descuento)}</span><div style="font-size:12px;color:var(--gray);margin-top:3px">📍 ${sanitizeHTML(p.zona||'Nacional')} · ✓ ${p.confirmaciones||0} confirmaciones</div></div>`).join('');
 }
 
 // ── CARD HTML ─────────────────────────────────────────────────────────────────
@@ -835,9 +843,9 @@ function cardHTML(p,diaRef){
   const zonaText=esMiZona?`📍 ${p.zona} · Tu zona`:p.zona==='Nacional'?'🇦🇷 Nacional':`📍 ${p.zona}`;
   const yaConf=(p.confirmadoPor||[]).includes(currentUser?.uid);
   return`<div class="promo-card">
-    <div class="promo-header"><span class="promo-empresa">${p.empresa||'—'}</span><span class="promo-cat">${p.categoria||''}</span></div>
-    <div class="promo-descuento">${p.descuento||''}</div>
-    ${p.condicion?`<p class="promo-condicion">📋 ${p.condicion}</p>`:''}
+    <div class="promo-header"><span class="promo-empresa">${sanitizeHTML(p.empresa||'—')}</span><span class="promo-cat">${sanitizeHTML(p.categoria||'')}</span></div>
+    <div class="promo-descuento">${sanitizeHTML(p.descuento||'')}</div>
+    ${p.condicion?`<p class="promo-condicion">📋 ${sanitizeHTML(p.condicion)}</p>`:''}
     <p class="promo-zona-label" style="${zonaStyle}">${zonaText}</p>
     <div class="promo-footer">
       <div class="promo-dias">${dias}</div>
