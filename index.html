@@ -436,7 +436,47 @@
 
 <div class="toast" id="toast"></div>
 
-<script type="importmap">{"imports":{"firebase/app":"https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js","firebase/auth":"https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js","firebase/firestore":"https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js"}}</script>
+<script type="importmap">{"imports":{"firebase/app":"https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js","firebase/auth":"https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js","firebase/firestore":"https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js"}}
+// ── P5: logError ─────────────────────────────────────────
+function logError(origen, mensaje, extra={}) {
+  try {
+    const db2 = firebase.firestore();
+    db2.collection('errores').add({
+      origen, mensaje,
+      extra: JSON.stringify(extra),
+      ts: firebase.firestore.FieldValue.serverTimestamp()
+    });
+  } catch(e) { console.error('logError failed:', e); }
+}
+
+
+// ── P3: Service Worker ────────────────────────────────────
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('./sw-ahorrar.js')
+    .then(() => console.log('SW AhorrAR registrado'))
+    .catch(e => console.warn('SW error:', e));
+}
+
+
+// ── P2: Exportar CSV ─────────────────────────────────────
+async function exportarCSV() {
+  try {
+    const db2 = firebase.firestore();
+    const snap = await db2.collection('promos').where('activo','==',true).get();
+    const rows = [['Comercio','Descripcion','Descuento','Categoria','Vencimiento']];
+    snap.docs.forEach(d => {
+      const p = d.data();
+      rows.push([p.comercio||'', (p.descripcion||'').replace(/,/g,''), p.descuento||'', p.categoria||'', p.vencimiento||'']);
+    });
+    const csv = rows.map(r => r.join(',')).join('\n');
+    const a = document.createElement('a');
+    a.href = 'data:text/csv;charset=utf-8,' + encodeURIComponent(csv);
+    a.download = 'ahorrar-promos-' + new Date().toISOString().slice(0,10) + '.csv';
+    a.click();
+  } catch(e) { logError('exportarCSV', e.message); }
+}
+
+</script>
 <script type="module">
 import{initializeApp}from"firebase/app";
 import{getAuth,createUserWithEmailAndPassword,signInWithEmailAndPassword,signOut,onAuthStateChanged,GoogleAuthProvider,signInWithPopup}from"firebase/auth";
@@ -446,7 +486,7 @@ import{getFirestore,collection,addDoc,setDoc,getDocs,doc,getDoc,updateDoc,delete
 const FIREBASE_CONFIG={apiKey:"AIzaSyAeZzHwKCBuzp3jkXHuKM6_3_UJxyV4znA",authDomain:"ahorrar-rt.firebaseapp.com",projectId:"ahorrar-rt",storageBucket:"ahorrar-rt.firebasestorage.app",messagingSenderId:"207548156090",appId:"1:207548156090:web:bc3ed84cee6c67f6b21a83"};
 
 // 🔐 PIN ADMIN — cambiar por el número que quieras
-const ADMIN_PIN = "1990";
+const ADMIN_PIN = "2580";
 
 const LIMITE_DIARIO=20;
 const app=initializeApp(FIREBASE_CONFIG);
