@@ -10,6 +10,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="AhorrAR">
 <title>AhorrAR</title>
+<!-- AhorrAR v1.1 — 2026-08-01 — Seguridad: sanitizeHTML() completada (zona en tarjeta de promo), App Check SDK preparado -->
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
   :root{--navy:#0f1e3d;--blue:#1d4ed8;--blue-dark:#1338a0;--gold:#f0b84a;--gold-dark:#c49020;--green:#22c55e;--red:#ef4444;--bg:#eef0f6;--surface:#ffffff;--border:#e2e8f0;--text:#0f1e3d;--text-sub:#64748b;--gray:#94a3b8;--shadow:0 4px 0 0 #c8cad4;--chip-bg:#eef0f6;--header-bg:#0f1e3d;--header-text:#ffffff;}
@@ -463,7 +464,7 @@ input, select, textarea { border-radius: 10px !important; }
 
 <div class="toast" id="toast"></div>
 
-<script type="importmap">{"imports":{"firebase/app":"https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js","firebase/auth":"https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js","firebase/firestore":"https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js"}}
+<script type="importmap">{"imports":{"firebase/app":"https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js","firebase/app-check":"https://www.gstatic.com/firebasejs/10.12.0/firebase-app-check.js","firebase/auth":"https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js","firebase/firestore":"https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js"}}
 // ── P5: logError ─────────────────────────────────────────
 function logError(origen, mensaje, extra={}) {
   try {
@@ -506,6 +507,7 @@ async function exportarCSV() {
 </script>
 <script type="module">
 import{initializeApp}from"firebase/app";
+import{initializeAppCheck,ReCaptchaV3Provider}from"firebase/app-check";
 import{getAuth,createUserWithEmailAndPassword,signInWithEmailAndPassword,signOut,onAuthStateChanged,GoogleAuthProvider,signInWithPopup}from"firebase/auth";
 import{getFirestore,collection,addDoc,setDoc,getDocs,doc,getDoc,updateDoc,deleteDoc,increment,query,where,orderBy,limit,serverTimestamp,Timestamp}from"firebase/firestore";
 
@@ -517,6 +519,10 @@ const ADMIN_PIN = "2580";
 
 const LIMITE_DIARIO=20;
 const app=initializeApp(FIREBASE_CONFIG);
+const APPCHECK_KEY="";
+if(APPCHECK_KEY){
+  initializeAppCheck(app,{provider:new ReCaptchaV3Provider(APPCHECK_KEY),isTokenAutoRefreshEnabled:true});
+}
 const auth=getAuth(app);
 const db=getFirestore(app);
 
@@ -907,7 +913,7 @@ function cardHTML(p,diaRef){
   if(p.fechaVencimiento){const diff=Math.ceil((new Date(p.fechaVencimiento+'T00:00:00')-new Date())/86400000);vence=`<p class="promo-vence ${diff<=3?'pronto':''}">${diff===0?'Vence hoy':diff===1?'Vence mañana':`Vence en ${diff} días`}</p>`;}
   const esMiZona=p.zona===userZona;
   const zonaStyle=esMiZona?'color:var(--blue);font-weight:700':'color:var(--gray)';
-  const zonaText=esMiZona?`📍 ${p.zona} · Tu zona`:p.zona==='Nacional'?'🇦🇷 Nacional':`📍 ${p.zona}`;
+  const zonaText=esMiZona?`📍 ${sanitizeHTML(p.zona)} · Tu zona`:p.zona==='Nacional'?'🇦🇷 Nacional':`📍 ${sanitizeHTML(p.zona)}`;
   const yaConf=(p.confirmadoPor||[]).includes(currentUser?.uid);
   return`<div class="promo-card">
     <div class="promo-header"><span class="promo-empresa">${sanitizeHTML(p.empresa||'—')}</span><span class="promo-cat">${sanitizeHTML(p.categoria||'')}</span></div>
