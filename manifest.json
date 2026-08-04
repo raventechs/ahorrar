@@ -3,7 +3,7 @@
   "short_name": "AhorrAR",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#FAFAFA",
+  "background_color": "#FFFFFF",
   "theme_color": "#16A085",
   "lang": "es",
   "icons": [
