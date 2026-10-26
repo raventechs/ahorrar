@@ -9,6 +9,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="AhorrAR">
+<!-- AhorrAR 1.1 — 2026-10-26 — BACKUP (no tenía): automático diario (solo admin) + manual + restaurar, en el Panel Admin. -->
 <title>AhorrAR</title>
 <meta name="theme-color" content="#16A085">
 <meta name="mobile-web-app-capable" content="yes">
@@ -626,10 +627,149 @@ function checkPin(){
   }
 }
 
+// ══════════ BACKUP ESTÁNDAR 1.1 ══════════
+// Automático: una vez por día al entrar el dueño. Baja el archivo JSON al dispositivo y deja una copia en IndexedDB (las últimas 7).
+// Manual y restaurar: botones de la sección de backup. Las fechas de Firestore (Timestamp) se guardan con una marca reversible.
+// Está dentro del módulo de la app (antes estaba en un script aparte que no veía db, auth ni getDocs y fallaba siempre).
+function _bkHoy() {
+  const d = new Date();
+  return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+}
+function _bkSer(v) {
+  if (v && typeof v === 'object') {
+    if (typeof v.toMillis === 'function' && 'seconds' in v && 'nanoseconds' in v) return { __ts: [v.seconds, v.nanoseconds] };
+    if (Array.isArray(v)) return v.map(_bkSer);
+    const o = {}; Object.keys(v).forEach(k => { o[k] = _bkSer(v[k]); }); return o;
+  }
+  return v;
+}
+function _bkRev(v) {
+  if (v && typeof v === 'object') {
+    if (Array.isArray(v)) return v.map(_bkRev);
+    if (Array.isArray(v.__ts) && v.__ts.length === 2) return new Timestamp(v.__ts[0], v.__ts[1]);
+    const o = {}; Object.keys(v).forEach(k => { o[k] = _bkRev(v[k]); }); return o;
+  }
+  return v;
+}
+async function _bkLeer(ref) {
+  const s = await ref.get();
+  return s.docs.map(d => Object.assign({ _id: d.id }, _bkSer(d.data())));
+}
+function _bkIdb(fecha, json) {
+  return new Promise(function (res) {
+    try {
+      const rq = indexedDB.open('ahorrar-backup', 1);
+      rq.onupgradeneeded = function () { rq.result.createObjectStore('b', { keyPath: 'fecha' }); };
+      rq.onsuccess = function () {
+        const idb = rq.result, tx = idb.transaction('b', 'readwrite'), st = tx.objectStore('b');
+        st.put({ fecha: fecha, json: json });
+        st.getAllKeys().onsuccess = function (e) { const ks = e.target.result.sort(); while (ks.length > 7) st.delete(ks.shift()); };
+        tx.oncomplete = function () { idb.close(); res(true); };
+        tx.onerror = tx.onabort = function () { idb.close(); res(false); };
+      };
+      rq.onerror = function () { res(false); };
+    } catch (e) { res(false); }
+  });
+}
+function _bkDescargar(json, fecha) {
+  const blob = new Blob([json], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = 'ahorrar-backup-' + fecha + '.json';
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(function () { URL.revokeObjectURL(url); }, 4000);
+}
+async function _bkDocs(q) { const s = await getDocs(q); return s.docs.map(function (d) { return Object.assign({ _id: d.id }, _bkSer(d.data())); }); }
+async function _bkEscribir(ops) {
+  for (let i = 0; i < ops.length; i += 25)
+    await Promise.all(ops.slice(i, i + 25).map(function (o) { return o[2] ? setDoc(o[0], o[1], { merge: true }) : setDoc(o[0], o[1]); }));
+}
+function _bkCfg() { return { app: 'AhorrAR', ver: '1.1', ls: 'ahorrar-ultimo-backup', label: 'ultimoBackupFecha' }; }
+function _bkMsg(m, t) { showToast(m); }
+// Las promociones y los usuarios son de TODA la comunidad, no de cada usuario: solo el administrador (flag isAdmin o PIN del panel) hace el backup.
+function _bkCtx() {
+  if (!currentUser) return { ok: false, msg: 'Iniciá sesión primero' };
+  const panel = document.getElementById('admin-screen');
+  const enPanel = !!(panel && panel.style.display === 'block');
+  if (!(isAdmin || enPanel)) return { ok: false, msg: 'Solo el administrador puede hacer el backup' };
+  return { ok: true, uid: currentUser.uid, auto: isAdmin };
+}
+async function _bkReunir(C) {
+  return { promociones: await _bkDocs(collection(db, 'promociones')), usuarios: await _bkDocs(collection(db, 'usuarios')) };
+}
+function _bkOps(bk, C) {
+  if (!Array.isArray(bk.promociones) || !Array.isArray(bk.usuarios)) throw new Error('el archivo no tiene promociones y usuarios');
+  const ops = [];
+  bk.promociones.forEach(function (d) { const r = Object.assign({}, d), id = r._id; delete r._id; if (id) ops.push([doc(db, 'promociones', id), _bkRev(r)]); });
+  // usuarios: se completan los datos del perfil pero nunca se otorga ni se quita el permiso de admin
+  bk.usuarios.forEach(function (d) { const r = Object.assign({}, d), id = r._id; delete r._id; delete r.isAdmin; if (id) ops.push([doc(db, 'usuarios', id), _bkRev(r), true]); });
+  return ops;
+}
+function _bkMontarUI() {
+  const cont = document.querySelector('#admin-screen .admin-content');
+  if (!cont || cont.querySelector('#bkCard')) return;
+  const K = _bkCfg();
+  const d = document.createElement('div'); d.id = 'bkCard'; d.className = 'admin-card'; d.style.marginBottom = '14px';
+  d.innerHTML = '<div class="admin-card-title">💾 Backup de la comunidad</div>' +
+    '<div class="admin-card-sub" style="margin:6px 0 10px">Una copia de TODAS las promociones y los usuarios (incluye mails: guardalo en un lugar seguro). Se baja solo una vez por día al entrar un administrador. Al restaurar, las promociones y los perfiles se reemplazan por los del archivo; el permiso de admin no se toca.</div>' +
+    '<div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn-admin-edit" id="bkBtnGen" style="flex:none;padding:9px 14px">📥 Descargar backup ahora</button>' +
+    '<button class="btn-admin-edit" id="bkBtnRest" style="flex:none;padding:9px 14px">📤 Restaurar desde un archivo</button></div>' +
+    '<input type="file" id="inputRestaurarBackup" accept=".json,application/json" style="display:none">' +
+    '<div class="admin-card-sub" style="margin-top:8px">Último backup: <span id="ultimoBackupFecha">—</span></div>';
+  cont.insertBefore(d, cont.firstChild);
+  d.querySelector('#bkBtnGen').addEventListener('click', function () { generarBackup(false); });
+  d.querySelector('#bkBtnRest').addEventListener('click', function () { d.querySelector('#inputRestaurarBackup').click(); });
+  d.querySelector('#inputRestaurarBackup').addEventListener('change', function () { restaurarBackup(this); });
+  let ultimo = null; try { ultimo = localStorage.getItem(K.ls); } catch (e) {}
+  if (ultimo) d.querySelector('#ultimoBackupFecha').textContent = ultimo;
+}
+
+async function generarBackup(silencioso) {
+  const K = _bkCfg(), C = _bkCtx();
+  if (!C.ok) { if (!silencioso) _bkMsg(C.msg, 'err'); return; }
+  try {
+    if (!silencioso) _bkMsg('Preparando backup…');
+    const datos = await _bkReunir(C);
+    const fecha = _bkHoy();
+    const json = JSON.stringify(Object.assign({ app: K.app, version: K.ver, fecha: new Date().toISOString(), uid: C.uid }, datos));
+    _bkDescargar(json, fecha);
+    await _bkIdb(fecha, json);
+    try { localStorage.setItem(K.ls, fecha); } catch (e) {}
+    const el = document.getElementById(K.label); if (el) el.textContent = fecha;
+    if (!silencioso) _bkMsg('✅ Backup descargado');
+  } catch (e) { logError('generarBackup', e.message); if (!silencioso) _bkMsg('Error al generar backup: ' + e.message, 'err'); }
+}
+async function restaurarBackup(input) {
+  const K = _bkCfg(), C = _bkCtx();
+  const file = input.files && input.files[0];
+  if (!file) return;
+  try {
+    if (!C.ok) { _bkMsg(C.msg, 'err'); return; }
+    const bk = JSON.parse(await file.text());
+    if (bk.app !== K.app) { _bkMsg('El archivo no es un backup de ' + K.app, 'err'); return; }
+    const ops = _bkOps(bk, C);
+    if (!confirm('Se van a volver a cargar ' + ops.length + ' registros en tu cuenta. Los que ya existen se reemplazan por los del archivo; el resto queda como está. ¿Continuar?')) return;
+    _bkMsg('Restaurando…');
+    await _bkEscribir(ops);
+    _bkMsg('✅ Backup restaurado (' + ops.length + ' registros)');
+    setTimeout(function () { location.reload(); }, 1500);
+  } catch (e) { logError('restaurarBackup', e.message); _bkMsg('Error al restaurar: ' + e.message, 'err'); }
+  finally { input.value = ''; }
+}
+function chequearBackupDiario() {
+  const K = _bkCfg(), C = _bkCtx();
+  if (!C.ok || !C.auto) return;
+  let ultimo = null; try { ultimo = localStorage.getItem(K.ls); } catch (e) {}
+  const el = document.getElementById(K.label); if (el && ultimo) el.textContent = ultimo;
+  if (ultimo !== _bkHoy()) setTimeout(function () { generarBackup(true); }, 5000);
+}
+window.generarBackup = generarBackup; window.restaurarBackup = restaurarBackup;
+// ══════════ FIN BACKUP ══════════
 // ── PANEL ADMIN ───────────────────────────────────────────────────────────────
 async function openAdminPanel(){
   document.getElementById('app-screen').style.display='none';
   document.getElementById('admin-screen').style.display='block';
+  _bkMontarUI();
   await loadAdminPromos();
 }
 
@@ -818,6 +958,7 @@ onAuthStateChanged(auth,async(user)=>{
     if(userDoc.banned){showToast('Cuenta suspendida');await signOut(auth);return;}
 
     isAdmin=userDoc.isAdmin===true;
+    setTimeout(chequearBackupDiario,0);   // backup automático diario (solo admin)
     userZona=userDoc.zona||'Nacional';
     zonaHoy=zonaExplorar=userZona;
     document.getElementById('auth-screen').style.display='none';
