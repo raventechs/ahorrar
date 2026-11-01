@@ -702,7 +702,7 @@ document.getElementById('header-logo').addEventListener('click',()=>{
 });
 
 // ── MODAL PIN ─────────────────────────────────────────────────────────────────
-function openPinModal(){pinBuffer='';updatePinDots();document.getElementById('pin-error').style.display='none';openModal('modal-admin-pin');}
+function openPinModal(){/* sin PIN: abre directo solo con la cuenta admin */if(window.rtIsAdmin&&window.rtIsAdmin()){openAdminPanel();}}
 
 function updatePinDots(){
   for(let i=0;i<4;i++){
